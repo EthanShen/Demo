@@ -8,25 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
-
-    class LoginApi {
-        private val handler by lazy { Handler(Looper.getMainLooper()) }
-
-        fun login(id: String, pwd: String, listener: Listener?) {
-            handler.postDelayed({
-                if (id == "kkbox" && pwd == "123456") {
-                    listener?.onSuccess("Login Success :)")
-                } else {
-                    listener?.onFail("Error: account/pwd is incorrect!")
-                }
-            }, 2000)
-        }
-
-        interface Listener {
-            fun onSuccess(message: String)
-            fun onFail(errorMessage: String)
-        }
+class MainActivity : AppCompatActivity(), MainView {
+    private val presenter: MainPresenter by lazy {
+        MainPresenter()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,60 +18,47 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         btn_submit.setOnClickListener {
-            login(edit_account.text.toString(), edit_pwd.text.toString())
+            presenter.login(edit_account.text.toString(), edit_pwd.text.toString())
         }
 
         btn_clear.setOnClickListener {
-            clear()
+            presenter.clear()
         }
     }
 
-    private fun login(id: String, pwd: String) {
-        if (id.isBlank() || pwd.isBlank()) {
-            showToast("Error: account/pwd is empty!")
-        } else {
-            disableButton()
-            showLoading()
-
-            LoginApi().login(id, pwd, object : LoginApi.Listener {
-                override fun onSuccess(message: String) {
-                    showToast(message)
-                    enableButton()
-                    hideLoading()
-                }
-
-                override fun onFail(errorMessage: String) {
-                    showToast(errorMessage)
-                    enableButton()
-                    hideLoading()
-                }
-            })
-        }
+    override fun onStart() {
+        super.onStart()
+        presenter.attachView(this)
     }
 
-    private fun showToast(text: String) {
-        Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
+    override fun onStop() {
+        super.onStop()
+        presenter.detachView()
     }
 
-    private fun clear() {
+    override fun clear() {
         edit_account.setText("")
         edit_pwd.setText("")
     }
 
-    private fun showLoading() {
+    override fun showToast(text: String) {
+        Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun showLoading() {
         progress.visibility = View.VISIBLE
     }
 
-    private fun hideLoading() {
+    override fun hideLoading() {
         progress.visibility = View.GONE
     }
 
-    private fun enableButton() {
+    override fun enableButton() {
         btn_submit.isEnabled = true
         btn_clear.isEnabled = true
     }
 
-    private fun disableButton() {
+    override fun disableButton() {
         btn_submit.isEnabled = false
         btn_clear.isEnabled = false
     }
